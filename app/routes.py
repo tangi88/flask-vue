@@ -143,11 +143,10 @@ def single_product(product_id):
     return jsonify(response_object)
 
 
-@app.route('/checkPrice', methods=['GET', 'POST'])
+@app.route('/checkPrice', methods=['POST'])
 def check_price():
     response_object = {'status': 'success'}
     if request.method == 'POST':
-        # post_data = request.get_json()
         message = 'Price updated!'
 
         try:
@@ -166,11 +165,34 @@ def check_price():
             message = 'Price not updated!'
 
         response_object['message'] = message
-    # else:
-        # data = [{'id': p.id, 'name': p.name, 'active': p.active,
-        #          'url_1': p.url_1, 'url_2': p.url_2, 'url_3': p.url_3,
-        #          'url_4': p.url_4, 'url_5': p.url_5} for p in Products.query.all()]
-        # response_object['products'] = data
+
+    return jsonify(response_object)
+
+
+@app.route('/priceProduct/<product_id>', methods=['GET'])
+def price_product(product_id):
+    response_object = {'status': 'success'}
+    if request.method == 'GET':
+        message = ''
+        chartData = {'labels': [],
+                     'datasets': []}
+
+        try:
+            product = Products.query.get(product_id)
+            prices = []
+            for price in product.prices:
+                chartData['labels'].append(price.date)
+                prices.append(price.price)
+
+            chartData['datasets'].append({'label': 'Price',
+                                        'backgroundColor': '#f87979',
+                                        'data': prices})
+        except:
+            message = 'Product not found!'
+
+        response_object['chartData'] = chartData
+        response_object['message'] = message
+
     return jsonify(response_object)
 
 
@@ -178,9 +200,7 @@ def save_price(product_id, url):
     if url == '':
         return
 
-    print(url)
     price_url = get_data(url)
-    print(price_url)
 
     if type(price_url) is str:
         error = Errors(product_id=product_id, text=price_url, url=url)

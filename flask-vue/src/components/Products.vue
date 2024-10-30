@@ -49,6 +49,12 @@
                     @click="handleDeleteProduct(product)">
                     Delete
                   </button>
+                  <button
+                    type="button"
+                    class="btn btn-success btn-sm"
+                    @click="togglePriceProductModal(product)">
+                    Prices
+                  </button>
                 </div>
               </td>
             </tr>
@@ -271,12 +277,47 @@
     </div>
     <div v-if="activeEditProductModal" class="modal-backdrop fade show"></div>
 
+    <!-- price product modal -->
+    <div
+      ref="priceProductModal"
+      class="modal fade"
+      :class="{ show: activePriceProductModal, 'd-block': activePriceProductModal }"
+      tabindex="-1"
+      role="dialog">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Prices</h5>
+            <button
+              type="button"
+              class="close"
+              data-dismiss="modal"
+              aria-label="Close"
+              @click="togglePriceProductModal">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <div class="container">
+                <Bar :data="chartData" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div v-if="activePriceProductModal" class="modal-backdrop fade show"></div>
+
+
   </div>
 </template>
 
 <script>
 import axios from 'axios';
 import Alert from './Alert.vue';
+import { Bar } from 'vue-chartjs'
+import { Chart as ChartJS, Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale } from 'chart.js'
+
+ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale)
 
 export default {
   data() {
@@ -305,9 +346,26 @@ export default {
       products: [],
       message: '',
       showMessage: false,
+      activePriceProductModal: false,
+      dataCollection: {
+        labels: [],
+        datasets: [
+          {
+            label: 'Data',
+            backgroundColor: '#f87979',
+            data: []
+          }
+        ]
+      },
+      options: {},
     };
   },
+  name: 'BarChart',
+  computed: {
+      chartData() { return this.dataCollection }
+  },
   components: {
+    Bar,
     alert: Alert,
   },
   methods: {
@@ -442,6 +500,31 @@ export default {
         .catch((error) => {
           console.error(error);
           this.getProducts();
+        });
+    },
+
+    togglePriceProductModal(product) {
+      this.priceProduct(product.id);
+      if (product) {
+        //this.priceProduct(product.id);
+        //this.editProductForm = product;
+      }
+      const body = document.querySelector('body');
+      this.activePriceProductModal = !this.activePriceProductModal;
+      if (this.activePriceProductModal) {
+        body.classList.add('modal-open');
+      } else{
+        body.classList.remove('modal-open');
+      }
+    },
+    priceProduct(productID) {
+      const path = `http://localhost:5001/priceProduct/${productID}`;
+      axios.get(path)
+        .then((res) => {
+          this.dataCollection = res.data.chartData;
+        })
+        .catch((error) => {
+          console.error(error);
         });
     },
 

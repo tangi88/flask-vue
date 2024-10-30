@@ -193,16 +193,20 @@ def get_data_velosport(soup):
 
 @get_price
 def get_data_kant(soup):
+    price_soup = None
     div_price = soup.find('div', class_='CatalogProduct_priceContainer__H5_4I')
-    price_soup = div_price.find(attrs={'itemprop': 'price'})
+    if div_price:
+        price_soup = div_price.find(attrs={'itemprop': 'price'})
 
     return price_soup
 
 
 @get_price
 def get_data_sportmarafon(soup):
+    price_soup = None
     div_price = soup.find('div', class_='catalog-detail__price-wrap')
-    price_soup = div_price.find(class_='catalog-detail__price_new')
+    if div_price:
+        price_soup = div_price.find(class_='catalog-detail__price_new')
 
     return price_soup
 
