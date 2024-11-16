@@ -2,8 +2,8 @@ import uuid
 from sqlalchemy import select, func
 from app import app, db
 from flask import jsonify, request
-from app.models import Products, Prices, Errors
-from app.parse import get_data
+from app.models import Products, Prices
+from app.parse import save_price
 
 
 @app.route('/ping', methods=['GET'])
@@ -147,24 +147,20 @@ def single_product(product_id):
 def check_price():
     response_object = {'status': 'success'}
     if request.method == 'POST':
-        message = 'Price updated!'
+        urls_products = {}
+        active_products = Products.query.filter_by(active=True)
 
-        try:
-            for product in Products.query.all():
-                product_id = product.id
+        for product in active_products:
+            product_id = product.id
 
-                save_price(product_id, product.url_1)
-                save_price(product_id, product.url_2)
-                save_price(product_id, product.url_3)
-                save_price(product_id, product.url_4)
-                save_price(product_id, product.url_5)
+            for i in range(1, 6):
+                url = product.get_url(i)
+                if url:
+                    urls_products[url] = product_id
 
-        except Exception as e:
-            db.session.rollback()
-            print(e)
-            message = 'Price not updated!'
+        save_price(urls_products)
 
-        response_object['message'] = message
+        response_object['message'] = ''
 
     return jsonify(response_object)
 
@@ -194,19 +190,4 @@ def price_product(product_id):
         response_object['message'] = message
 
     return jsonify(response_object)
-
-
-def save_price(product_id, url):
-    if url == '':
-        return
-
-    price_url = get_data(url)
-
-    if type(price_url) is str:
-        error = Errors(product_id=product_id, text=price_url, url=url)
-        db.session.add(error)
-    else:
-        price = Prices(product_id=product_id, price=price_url, url=url)
-        db.session.add(price)
-    db.session.commit()
 

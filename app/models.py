@@ -19,6 +19,14 @@ class Products(db.Model):
     def __repr__(self):
         return '<Product {}>'.format(self.name)
 
+    def get_url(self, i):
+        name_url = f'url_{i}'
+        url = ''
+        if name_url in self.__dict__:
+            url = getattr(self, name_url)
+
+        return url
+
 
 class Prices(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
